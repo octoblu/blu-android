@@ -1,13 +1,15 @@
 package com.octoblu.flowyo;
 
+import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.android.volley.AuthFailureError;
@@ -18,6 +20,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.melnykov.fab.FloatingActionButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,14 +30,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class FlowYo extends Activity implements AdapterView.OnItemClickListener {
+public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener {
     final static String TAG = "FlowYo";
+    public static final String UUID_KEY = "uuid";
+    public static final String TOKEN_KEY = "token";
+
     final String flowsUrl = "http://app.octoblu.com/api/flows";
     final String messageDeviceUrl = "http://meshblu.octoblu.com/messages";
-    final String uuid  = "9a55e7f0-2329-11e4-91e7-271d432ec4ce";
-    final String token = "4969eddcf93ad6f685c041cb62193df7870311c9";
-    private ArrayAdapter<String> flowListAdapter;
+    private String uuid;
+    private String token;
+    private TriggerListAdapter triggerListAdapter;
     private ArrayList<Trigger> triggers;
     private RequestQueue requestQueue;
 
@@ -43,52 +48,79 @@ public class FlowYo extends Activity implements AdapterView.OnItemClickListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flow_yo);
 
+        requestQueue = Volley.newRequestQueue(this);
+
+        ActionBar actionBar = getActionBar();
+        if(actionBar != null) {
+            actionBar.hide();
+        }
+
         ListView flowList = (ListView) findViewById(R.id.flowList);
 
-        flowListAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-        flowList.setAdapter(flowListAdapter);
+        triggerListAdapter = new TriggerListAdapter(this, R.layout.trigger_list_item);
+        flowList.setAdapter(triggerListAdapter);
         flowList.setOnItemClickListener(this);
 
-        requestQueue = Volley.newRequestQueue(this);
+        FloatingActionButton floatingActionButton = (FloatingActionButton) findViewById(R.id.floatingActionButton);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                SharedPreferences.Editor preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0).edit();
+                preferences.clear();
+                preferences.commit();
+                uuid = null;
+                token = null;
+                triggers.clear();
+                onStart();
+            }
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
+
+        if(!preferences.contains(UUID_KEY) || !preferences.contains(TOKEN_KEY)) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            return;
+        }
+
+        uuid = preferences.getString(UUID_KEY, null);
+        token = preferences.getString(TOKEN_KEY, null);
+
+
         requestQueue.add(getFlowsRequest());
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.flow_yo, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
     }
 
     private JsonArrayRequest getFlowsRequest() {
         return new JsonArrayRequest(flowsUrl, new Response.Listener<JSONArray>(){
             @Override
             public void onResponse(JSONArray jsonArray) {
-                flowListAdapter.clear();
+                triggerListAdapter.clear();
                 triggers = parseTriggers(jsonArray);
 
                 for(Trigger trigger : triggers){
-                    flowListAdapter.add(trigger.getTriggerName());
+                    triggerListAdapter.add(trigger);
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                Log.e(TAG, volleyError.getMessage());
-                Log.w(TAG, volleyError.getStackTrace().toString());
+                Log.e(TAG, volleyError.getMessage(), volleyError);
             }
         }) {
             @Override
@@ -124,8 +156,7 @@ public class FlowYo extends Activity implements AdapterView.OnItemClickListener 
                 }
             }
         } catch (JSONException jsonException) {
-            Log.e(TAG, jsonException.getMessage());
-            Log.w(TAG, jsonException.getStackTrace().toString());
+            Log.e(TAG, jsonException.getMessage(), jsonException);
         }
 
         return triggers;
@@ -156,8 +187,7 @@ public class FlowYo extends Activity implements AdapterView.OnItemClickListener 
                     payload.put("from", trigger.getTriggerId());
                     json.put("payload", payload);
                 } catch (JSONException e) {
-                    Log.e(TAG, e.getMessage());
-                    Log.w(TAG, e.getStackTrace().toString());
+                    Log.e(TAG, e.getMessage(), e);
                 }
 
                 return json.toString().getBytes();
