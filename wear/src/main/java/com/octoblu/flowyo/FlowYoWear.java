@@ -29,21 +29,20 @@ import java.util.HashSet;
 
 public class FlowYoWear extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener {
 
-    public static final String TAG = "FlowYoWear";
-    private TextView mTextView;
+    public static final String TAG = "FlowYoWear:FlowYoWear";
     private ArrayList<DataMap> triggers;
     private ColorListAdapter colorListAdapter;
     private GoogleApiClient googleApiClient;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("FlowYoWear", "onCreate");
+        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_flow_yo);
 
         triggers = new ArrayList<DataMap>();
         colorListAdapter = new ColorListAdapter(this, R.layout.color_list_item_row);
+
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
@@ -94,6 +93,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
             @Override
             public void onResult(DataItemBuffer dataItems) {
                 Log.d(TAG, "getDataItems onResult");
+                colorListAdapter.clear();
                 for(DataItem dataItem : dataItems) {
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
                     triggers = dataMap.getDataMapArrayList("triggers");
@@ -130,17 +130,18 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
         PendingResult<NodeApi.GetConnectedNodesResult> nodesResult = getNodes();
         nodesResult.setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
             @Override
-            public void onResult(NodeApi.GetConnectedNodesResult nodes) {
-                for(Node node : nodes.getNodes()) {
-                    Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), "FlowYoActivity", trigger.getString("triggerId").getBytes());
+            public void onResult(NodeApi.GetConnectedNodesResult connectedNodesResult) {
+                for(Node node : connectedNodesResult.getNodes()) {
+                    String flowId = trigger.getString("flowId");
+                    String triggerId = trigger.getString("triggerId");
+
+                    Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), "Trigger", (flowId + "/" + triggerId).getBytes());
                 }
             }
         });
     }
 
     private PendingResult<NodeApi.GetConnectedNodesResult> getNodes() {
-        HashSet<String> results= new HashSet<String>();
-
         PendingResult<NodeApi.GetConnectedNodesResult> nodesResult = Wearable.NodeApi.getConnectedNodes(googleApiClient);
         return nodesResult;
     }
