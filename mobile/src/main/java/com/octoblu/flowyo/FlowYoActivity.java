@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -40,7 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener {
+public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener, SwipeRefreshLayout.OnRefreshListener {
     final static String TAG = "FlowYo";
     public static final String UUID_KEY = "uuid";
     public static final String TOKEN_KEY = "token";
@@ -53,6 +54,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     private ArrayList<Trigger> triggers;
     private RequestQueue requestQueue;
     private GoogleApiClient googleApiClient;
+    private SwipeRefreshLayout refreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,8 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
             actionBar.hide();
         }
 
+        refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshContainer);
+        refreshLayout.setOnRefreshListener(this);
         ListView flowList = (ListView) findViewById(R.id.flowList);
 
         colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item);
@@ -106,7 +110,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
         token = preferences.getString(TOKEN_KEY, null);
 
 
-        requestQueue.add(getFlowsRequest());
+        refreshTriggers();
     }
 
     @Override
@@ -133,7 +137,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                 }
 
                 syncTriggersToWatch(triggers);
-
+                refreshLayout.setRefreshing(false);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -268,5 +272,15 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                 return;
             }
         }
+    }
+
+    @Override
+    public void onRefresh() {
+        refreshTriggers();
+    }
+
+    public void refreshTriggers() {
+        refreshLayout.setRefreshing(true);
+        requestQueue.add(getFlowsRequest());
     }
 }
