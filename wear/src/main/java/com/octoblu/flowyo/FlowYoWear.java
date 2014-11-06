@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,7 +24,6 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 public class FlowYoWear extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener {
 
@@ -37,7 +35,6 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_flow_yo);
 
         triggers = new ArrayList<DataMap>();
@@ -66,8 +63,6 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        Log.d(TAG, "onDataChanged");
-
         for(DataEvent event : dataEvents) {
             final DataMap dataMap = DataMapItem.fromDataItem(event.getDataItem()).getDataMap();
             runOnUiThread(new Runnable() {
@@ -79,20 +74,17 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
                     }
                 }
             });
-
         }
     }
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.d(TAG, "Connected to Google Api Service");
         Wearable.DataApi.addListener(googleApiClient, this);
 
-        PendingResult<DataItemBuffer> pendingResult = Wearable.DataApi.getDataItems(googleApiClient);
+        final PendingResult<DataItemBuffer> pendingResult = Wearable.DataApi.getDataItems(googleApiClient);
         pendingResult.setResultCallback(new ResultCallback<DataItemBuffer>() {
             @Override
             public void onResult(DataItemBuffer dataItems) {
-                Log.d(TAG, "getDataItems onResult");
                 colorListAdapter.clear();
                 for(DataItem dataItem : dataItems) {
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
@@ -101,6 +93,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
                         colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
+                dataItems.release();
             }
         });
     }

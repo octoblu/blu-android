@@ -16,9 +16,6 @@ import android.widget.ListView;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
@@ -31,7 +28,6 @@ import com.google.android.gms.wearable.Wearable;
 import com.melnykov.fab.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener {
     final static String TAG = "FlowYo";
@@ -47,7 +43,6 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.d(TAG, "Connected to Google Api Service");
         Wearable.MessageApi.addListener(googleApiClient, this);
     }
 
@@ -150,7 +145,6 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
         pendingResult.setResultCallback(new ResultCallback<DataItemBuffer>() {
             @Override
             public void onResult(DataItemBuffer dataItems) {
-                Log.d(TAG, "getDataItems onResult");
                 colorListAdapter.clear();
 
                 for(DataItem dataItem : dataItems) {
@@ -160,6 +154,8 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                         colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
+
+                dataItems.release();
             }
         });
     }
