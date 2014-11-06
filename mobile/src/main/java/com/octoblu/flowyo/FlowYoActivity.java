@@ -24,9 +24,7 @@ import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
@@ -51,7 +49,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     final String messageDeviceUrl = "http://meshblu.octoblu.com/messages";
     private String uuid;
     private String token;
-    private TriggerListAdapter triggerListAdapter;
+    private ColorListAdapter colorListAdapter;
     private ArrayList<Trigger> triggers;
     private RequestQueue requestQueue;
     private GoogleApiClient googleApiClient;
@@ -73,8 +71,8 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
 
         ListView flowList = (ListView) findViewById(R.id.flowList);
 
-        triggerListAdapter = new TriggerListAdapter(this, R.layout.trigger_list_item);
-        flowList.setAdapter(triggerListAdapter);
+        colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item);
+        flowList.setAdapter(colorListAdapter);
         flowList.setOnItemClickListener(this);
 
         FloatingActionButton floatingActionButton = (FloatingActionButton) findViewById(R.id.floatingActionButton);
@@ -127,11 +125,11 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
         return new JsonArrayRequest(flowsUrl, new Response.Listener<JSONArray>(){
             @Override
             public void onResponse(JSONArray jsonArray) {
-                triggerListAdapter.clear();
+                colorListAdapter.clear();
                 triggers = parseTriggers(jsonArray);
 
                 for(Trigger trigger : triggers){
-                    triggerListAdapter.add(trigger);
+                    colorListAdapter.add(trigger.getTriggerName());
                 }
 
                 syncTriggersToWatch(triggers);

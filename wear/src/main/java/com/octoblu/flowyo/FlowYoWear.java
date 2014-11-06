@@ -6,7 +6,6 @@ import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -26,7 +25,6 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 
 public class FlowYoWear extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener {
@@ -34,7 +32,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
     public static final String TAG = "FlowYoWear";
     private TextView mTextView;
     private ArrayList<DataMap> triggers;
-    private ArrayAdapter<String> arrayAdapter;
+    private ColorListAdapter colorListAdapter;
     private GoogleApiClient googleApiClient;
 
 
@@ -45,7 +43,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
         setContentView(R.layout.activity_flow_yo);
 
         triggers = new ArrayList<DataMap>();
-        arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+        colorListAdapter = new ColorListAdapter(this, R.layout.color_list_item_row);
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
@@ -60,7 +58,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 ListView triggerList = (ListView) stub.findViewById(R.id.triggerList);
-                triggerList.setAdapter(arrayAdapter);
+                triggerList.setAdapter(colorListAdapter);
                 triggerList.setOnItemClickListener(self);
             }
         });
@@ -78,7 +76,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
                 public void run() {
                     triggers = dataMap.getDataMapArrayList("triggers");
                     for(DataMap trigger : triggers) {
-                        arrayAdapter.add(trigger.getString("triggerName"));
+                        colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
             });
@@ -100,7 +98,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
                     triggers = dataMap.getDataMapArrayList("triggers");
                     for(DataMap trigger : triggers) {
-                        arrayAdapter.add(trigger.getString("triggerName"));
+                        colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
             }
