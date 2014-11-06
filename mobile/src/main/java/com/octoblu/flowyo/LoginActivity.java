@@ -14,7 +14,7 @@ import java.util.Set;
 public class LoginActivity extends Activity {
     private final static String TAG = "FlowYo:login";
     final static String PREFERENCES_FILE_NAME = "meshblu_credentials";
-    private final static String LOGIN_URL = "http://staging.octoblu.com/static/auth-login.html";
+    private final static String LOGIN_URL = "http://app.octoblu.com/static/auth-login.html";
     public static final String UUID_KEY = "uuid";
     public static final String TOKEN_KEY = "token";
 
@@ -30,6 +30,7 @@ public class LoginActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                Log.d(TAG, "onPageFinished: " + url);
 
                 Uri uri = Uri.parse(url);
                 Set<String> queryParameters = uri.getQueryParameterNames();

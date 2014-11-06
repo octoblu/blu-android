@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -20,6 +21,17 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.Wearable;
 import com.melnykov.fab.FloatingActionButton;
 
 import org.json.JSONArray;
@@ -30,7 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener {
+public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener {
     final static String TAG = "FlowYo";
     public static final String UUID_KEY = "uuid";
     public static final String TOKEN_KEY = "token";
@@ -42,11 +54,15 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     private TriggerListAdapter triggerListAdapter;
     private ArrayList<Trigger> triggers;
     private RequestQueue requestQueue;
+    private GoogleApiClient googleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flow_yo);
+
+        googleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API).addConnectionCallbacks(this).build();
+        googleApiClient.connect();
 
         requestQueue = Volley.newRequestQueue(this);
 
@@ -74,6 +90,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                 onStart();
             }
         });
+
     }
 
     @Override
@@ -116,6 +133,9 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                 for(Trigger trigger : triggers){
                     triggerListAdapter.add(trigger);
                 }
+
+                syncTriggersToWatch(triggers);
+
             }
         }, new Response.ErrorListener() {
             @Override
@@ -153,6 +173,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
 
                     Trigger trigger = new Trigger(flow.getString("flowId"), flow.getString("name"), node.getString("id"), node.getString("name"));
                     triggers.add(trigger);
+
                 }
             }
         } catch (JSONException jsonException) {
@@ -165,6 +186,10 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         final Trigger trigger = triggers.get(i);
+        fireTrigger(trigger);
+    }
+
+    private void fireTrigger(final Trigger trigger) {
         requestQueue.add(new StringRequest(Request.Method.POST, messageDeviceUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String s) {
@@ -200,5 +225,50 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                 return headers;
             }
         });
+    }
+
+    private void syncTriggersToWatch(ArrayList<Trigger> triggers) {
+        ArrayList<DataMap> dataMaps = new ArrayList<DataMap>(triggers.size());
+        for(Trigger trigger: triggers){
+            DataMap dataMap = new DataMap();
+            dataMap.putString("triggerId", trigger.getTriggerId());
+            dataMap.putString("triggerName", trigger.getTriggerName());
+            dataMaps.add(dataMap);
+        }
+        PutDataMapRequest dataMap = PutDataMapRequest.create("/triggers");
+        dataMap.getDataMap().putDataMapArrayList("triggers", dataMaps);
+
+        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(googleApiClient, dataMap.asPutDataRequest());
+        Log.d(TAG, "sent data");
+        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(DataApi.DataItemResult dataItemResult) {
+                Log.d(TAG, "onResult resultCallback");
+                Toast.makeText(getApplicationContext(), "data received by watch", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.d(TAG, "Connected to Google Api Service");
+        Wearable.MessageApi.addListener(googleApiClient, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+        Log.d(TAG, "onMessageReceived");
+        String triggerId = new String(messageEvent.getData());
+        for(Trigger trigger : triggers){
+            if(trigger.getTriggerId().equals(triggerId)) {
+                fireTrigger(trigger);
+                return;
+            }
+        }
     }
 }
