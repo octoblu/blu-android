@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -67,6 +66,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
 
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshContainer);
         refreshLayout.setOnRefreshListener(this);
+
         ListView flowList = (ListView) findViewById(R.id.flowList);
 
         colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item);
@@ -124,6 +124,8 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     @Override
     protected void onStart() {
         super.onStart();
+
+
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
 
         if(!preferences.contains(UUID_KEY) || !preferences.contains(TOKEN_KEY)) {
@@ -133,6 +135,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
         }
 
         refreshTriggers();
+        loadItemsFromDataApi();
     }
 
     private PendingResult<NodeApi.GetLocalNodeResult> getLocalNode() {
@@ -154,7 +157,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
                         colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
-
+                refreshLayout.setRefreshing(false);
                 dataItems.release();
             }
         });
