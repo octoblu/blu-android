@@ -1,4 +1,4 @@
-package com.octoblu.flowyo;
+package com.octoblu.blu;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

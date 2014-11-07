@@ -1,4 +1,4 @@
-package com.octoblu.flowyo;
+package com.octoblu.blu;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -6,12 +6,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
@@ -28,7 +30,7 @@ import com.melnykov.fab.FloatingActionButton;
 
 import java.util.ArrayList;
 
-public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener {
+public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener, GoogleApiClient.OnConnectionFailedListener {
     final static String TAG = "FlowYo";
     public static final String UUID_KEY = "uuid";
     public static final String TOKEN_KEY = "token";
@@ -46,6 +48,11 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     }
 
     @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.e(TAG, "onConnectionFailed: " + connectionResult.getErrorCode());
+    }
+
+    @Override
     public void onConnectionSuspended(int i) {}
 
 
@@ -56,7 +63,7 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
 
         triggers = new ArrayList<DataMap>();
 
-        googleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API).addConnectionCallbacks(this).build();
+        googleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API).addConnectionCallbacks(this).addOnConnectionFailedListener(this).build();
         googleApiClient.connect();
 
         ActionBar actionBar = getActionBar();
@@ -111,12 +118,6 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        return id == R.id.action_settings || super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onRefresh() {
         refreshTriggers();
     }
@@ -150,10 +151,10 @@ public class FlowYoActivity extends Activity implements AdapterView.OnItemClickL
             public void onResult(DataItemBuffer dataItems) {
                 colorListAdapter.clear();
 
-                for(DataItem dataItem : dataItems) {
+                for (DataItem dataItem : dataItems) {
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
                     triggers = dataMap.getDataMapArrayList("triggers");
-                    for(DataMap trigger : triggers) {
+                    for (DataMap trigger : triggers) {
                         colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }

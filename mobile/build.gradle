@@ -5,7 +5,7 @@ android {
     buildToolsVersion "21.1.0"
 
     defaultConfig {
-        applicationId "com.octoblu.flowyo"
+        applicationId "com.octoblu.blu"
         minSdkVersion 16
         targetSdkVersion 20
         versionCode 1

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.octoblu.flowyo" >
+    package="com.octoblu.blu" >
 
     <uses-feature android:name="android.hardware.type.watch" />
 
     <application
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@drawable/ic_launcher_wear"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.DeviceDefault" >
 
@@ -15,7 +15,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".FlowYoWear"
+            android:name="com.octoblu.blu.FlowYoWear"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

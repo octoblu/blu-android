@@ -1,4 +1,4 @@
-package com.octoblu.flowyo;
+package com.octoblu.blu;
 
 /**
  * Created by roy on 11/5/14.

@@ -1,4 +1,4 @@
-package com.octoblu.flowyo;
+package com.octoblu.blu;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -69,13 +69,14 @@ public class FlowService extends WearableListenerService implements GoogleApiCli
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand");
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         super.onMessageReceived(messageEvent);
-        
+        Log.d(TAG, "onMessageReceived");
         if(messageEvent.getPath().equals("Refresh")){
             refresh();
             return;
@@ -238,7 +239,13 @@ public class FlowService extends WearableListenerService implements GoogleApiCli
         PutDataMapRequest dataMap = PutDataMapRequest.create("/triggers");
         dataMap.getDataMap().putDataMapArrayList("triggers", dataMaps);
 
-        Wearable.DataApi.putDataItem(googleApiClient, dataMap.asPutDataRequest());
+        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(googleApiClient, dataMap.asPutDataRequest());
+        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(DataApi.DataItemResult dataItemResult) {
+                Log.d(TAG, "Watch received data");
+            }
+        });
         sendMessageToUI("Refreshed", null);
     }
 }

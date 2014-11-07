@@ -1,4 +1,4 @@
-package com.octoblu.flowyo;
+package com.octoblu.blu;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -14,7 +14,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataItemBuffer;
@@ -76,6 +75,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
         Wearable.DataApi.addListener(googleApiClient, this);
 
         loadItemsFromDataApi();
+        sendMessageToPhone("Refresh", null);
     }
 
 

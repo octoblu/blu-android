@@ -1,4 +1,4 @@
-package com.octoblu.flowyo;
+package com.octoblu.blu;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
