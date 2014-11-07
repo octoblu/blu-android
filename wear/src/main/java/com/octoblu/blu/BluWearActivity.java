@@ -25,7 +25,7 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
 
-public class FlowYoWear extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
+public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
 
     public static final String TAG = "FlowYoWear:FlowYoWear";
     private ArrayList<DataMap> triggers;
@@ -48,7 +48,7 @@ public class FlowYoWear extends Activity implements DataApi.DataListener, Google
                 .build();
         googleApiClient.connect();
 
-        final FlowYoWear self = this;
+        final BluWearActivity self = this;
 
         final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {

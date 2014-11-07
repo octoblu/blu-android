@@ -30,7 +30,7 @@ import com.melnykov.fab.FloatingActionButton;
 
 import java.util.ArrayList;
 
-public class FlowYoActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener, GoogleApiClient.OnConnectionFailedListener {
+public class BluActivity extends Activity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener, GoogleApiClient.OnConnectionFailedListener {
     final static String TAG = "FlowYo";
     public static final String UUID_KEY = "uuid";
     public static final String TOKEN_KEY = "token";
