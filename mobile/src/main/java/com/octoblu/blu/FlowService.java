@@ -1,8 +1,8 @@
 package com.octoblu.blu;
 
+import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -13,17 +13,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataMap;
-import com.google.android.gms.wearable.MessageEvent;
-import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.Wearable;
-import com.google.android.gms.wearable.WearableListenerService;
+import com.octoblue.blu.shared.Trigger;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,77 +24,62 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FlowService extends WearableListenerService implements GoogleApiClient.ConnectionCallbacks {
-    private static final String TAG = "FlowYoWear:WearableService";
+public class FlowService extends IntentService {
+    private static final String TAG = "Flow:Service";
     private static final String UUID_KEY = "uuid";
     private static final String TOKEN_KEY = "token";
     private static final String MESSAGE_DEVICE_URL = "http://meshblu.octoblu.com/messages";
     private static final String FLOWS_URL = "http://app.octoblu.com/api/flows";
+    public static final String TRIGGERS_REFRESH_REQUEST = "com.octoblu.blu.TRIGGERS_REFRESH_REQUEST";
+    public static final String TRIGGERS_UPDATE_PKG = "com.octoblu.blu.TRIGGERS_UPDATE_PKG";
+    public static final String TRIGGER_PRESSED = "com.octoblu.blu.TRIGGER_PRESSED";
+    public static final String TRIGGER_RESULT = "com.octoblu.blu.TRIGGER_RESULT";
 
     private List<Trigger> triggers;
     private RequestQueue requestQueue;
-    private GoogleApiClient googleApiClient;
 
-
-    @Override
-    public void onConnected(Bundle bundle) {
-        Log.d(TAG, "Connected to Google Api Service");
+    public FlowService() {
+        super("FlowService");
     }
 
-    @Override
-    public void onConnectionSuspended(int i) {
-
+    public FlowService(String name) {
+        super(name);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        googleApiClient = new GoogleApiClient.Builder(this).addApi(Wearable.API).addConnectionCallbacks(this).build();
-        googleApiClient.connect();
-
         requestQueue = Volley.newRequestQueue(this);
         triggers = new ArrayList<Trigger>();
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand");
-        return super.onStartCommand(intent, flags, startId);
-    }
-
-    @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
-        super.onMessageReceived(messageEvent);
-        Log.d(TAG, "onMessageReceived");
-        if(messageEvent.getPath().equals("Refresh")){
-            refresh();
-            return;
-        }
-
-        if(messageEvent.getPath().equals("Trigger")) {
-            String data = new String(messageEvent.getData());
-            String[] strings = data.split("/");
-            String flowId = strings[0];
-            String triggerId = strings[1];
-            fireTrigger(flowId, triggerId);
+    public void onHandleIntent(Intent intent) {
+        if (intent!=null) {
+            if (intent.getAction().equals(TRIGGERS_REFRESH_REQUEST)) {
+                refresh();
+            }
+            if (intent.getAction().equals(TRIGGER_PRESSED)) {
+                fireTrigger(intent.getStringExtra("flowId"),
+                        intent.getStringExtra("triggerId"),
+                        intent.getIntExtra("index", 0));
+            }
         }
     }
 
-    private void fireTrigger(final String flowId, final String triggerId) {
+    private void fireTrigger(final String flowId, final String triggerId, final int i) {
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
-
         if(!preferences.contains(UUID_KEY) || !preferences.contains(TOKEN_KEY)) {
+            Log.e(TAG,"Missing uuid or token");
             return;
         }
 
         final String uuid = preferences.getString(UUID_KEY, null);
         final String token = preferences.getString(TOKEN_KEY, null);
 
-        requestQueue.add(getTriggerRequest(flowId, triggerId, uuid, token));
+        requestQueue.add(getTriggerRequest(flowId, triggerId, uuid, token, i));
     }
-
-
 
     private Map<String, String> getAuthHeaders(String uuid, String token) {
         HashMap<String, String> headers = new HashMap<String, String>(2);
@@ -122,7 +97,11 @@ public class FlowService extends WearableListenerService implements GoogleApiCli
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                Log.e(TAG, volleyError.getMessage(), volleyError);
+                if (volleyError!=null) {
+                    if(volleyError.networkResponse!=null && volleyError.networkResponse.statusCode != 200)
+                        Log.e(TAG, volleyError.getMessage(), volleyError);
+                } else
+                    Log.e(TAG,"Unknown volley error");
             }
         }) {
             @Override
@@ -132,21 +111,24 @@ public class FlowService extends WearableListenerService implements GoogleApiCli
         };
     }
 
-    private PendingResult<NodeApi.GetLocalNodeResult> getLocalNode() {
-        PendingResult<NodeApi.GetLocalNodeResult> nodesResult = Wearable.NodeApi.getLocalNode(googleApiClient);
-        return nodesResult;
-    }
+    private StringRequest getTriggerRequest(final String flowId, final String triggerId, final String uuid, final String token, int i) {
 
-    private StringRequest getTriggerRequest(final String flowId, final String triggerId, final String uuid, final String token) {
+        final Intent intent = new Intent(TRIGGER_RESULT);
+        intent.putExtra("flowId",flowId);
+        intent.putExtra("triggerId",triggerId);
+        intent.putExtra("index",i);
+
         return new StringRequest(Request.Method.POST, MESSAGE_DEVICE_URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String s) {
-
+                intent.putExtra("result",s);
+                sendBroadcast(intent);
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-
+                intent.putExtra("error",(volleyError!=null ? volleyError.getMessage() : null));
+                sendBroadcast(intent);
             }
         }) {
             @Override
@@ -214,38 +196,18 @@ public class FlowService extends WearableListenerService implements GoogleApiCli
         requestQueue.add(getFlowsRequest(uuid, token));
     }
 
-    public void sendMessageToUI(final String path, final byte[] message) {
-        getLocalNode().setResultCallback(new ResultCallback<NodeApi.GetLocalNodeResult>() {
-            @Override
-            public void onResult(NodeApi.GetLocalNodeResult localNodeResult) {
-                Node node = localNodeResult.getNode();
-                Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), path, message);
-            }
-        });
-    }
-
-    private void syncTriggers(List<Trigger> triggers) {
+    private void syncTriggers(ArrayList<Trigger> triggers) {
         this.triggers.clear();
         this.triggers.addAll(triggers);
 
-        ArrayList<DataMap> dataMaps = new ArrayList<DataMap>(triggers.size());
-        for(Trigger trigger: triggers){
-            DataMap dataMap = new DataMap();
-            dataMap.putString("flowId", trigger.getFlowId());
-            dataMap.putString("triggerId", trigger.getTriggerId());
-            dataMap.putString("triggerName", trigger.getTriggerName());
-            dataMaps.add(dataMap);
-        }
-        PutDataMapRequest dataMap = PutDataMapRequest.create("/triggers");
-        dataMap.getDataMap().putDataMapArrayList("triggers", dataMaps);
+        Intent intent = new Intent(TRIGGERS_UPDATE_PKG);
+        intent.putParcelableArrayListExtra("triggers", triggers);
 
-        PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(googleApiClient, dataMap.asPutDataRequest());
-        pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(DataApi.DataItemResult dataItemResult) {
-                Log.d(TAG, "Watch received data");
-            }
-        });
-        sendMessageToUI("Refreshed", null);
+        if (triggers.size()>0) {
+            sendBroadcast(intent);
+            intent.setClass(this,FlowWearService.class);
+            startService(intent);
+        }
     }
+
 }
