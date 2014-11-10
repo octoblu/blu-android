@@ -50,9 +50,13 @@ public class FlowWearService extends WearableListenerService {
         if(messageEvent.getPath().equals("Refresh")){
             startService(new Intent(FlowService.TRIGGERS_REFRESH_REQUEST, null, this, FlowService.class));
         } else if(messageEvent.getPath().equals("Trigger")) {
+            String[] strings = new String(messageEvent.getData()).split("/");
+
             Intent intent = new Intent(FlowService.TRIGGER_PRESSED);
-            intent.putExtra("trigger", messageEvent.getData());
+            intent.putExtra("flowId", strings[0]);
+            intent.putExtra("triggerId", strings[1]);
             intent.setClass(this, FlowService.class);
+
             startService(intent);
         }
     }

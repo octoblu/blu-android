@@ -104,7 +104,9 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         final DataMap trigger = this.triggers.get(i);
         String flowId = trigger.getString("flowId");
         String triggerId = trigger.getString("triggerId");
-        sendMessageToPhone("Trigger", (flowId + "/" + triggerId).getBytes());
+        String message = (flowId + "/" + triggerId);
+        Log.d(TAG, "onItemClick: " + message);
+        sendMessageToPhone("Trigger", message.getBytes());
     }
 
     @Override
