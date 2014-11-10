@@ -8,7 +8,6 @@ import android.util.Log;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageEvent;
@@ -33,13 +32,7 @@ public class FlowWearService extends WearableListenerService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) {
-            Log.w(TAG,"onStartCommand got null intent");
-            return Service.START_NOT_STICKY;
-        }
-        Log.d(TAG, "onStartCommand " + intent.getAction());
-
-        if (!intent.getAction().equals(FlowService.TRIGGERS_UPDATE_PKG)) {
+        if (intent == null || !intent.getAction().equals(FlowService.TRIGGERS_UPDATE_PKG)) {
             return super.onStartCommand(intent, flags, startId);
         }
 
@@ -62,10 +55,6 @@ public class FlowWearService extends WearableListenerService {
             intent.setClass(this, FlowService.class);
             startService(intent);
         }
-    }
-
-    private static Asset createAsset(Trigger trigger) {
-        return Asset.createFromRef(trigger.getFlowId()+"\0"+trigger.getFlowName()+"\0"+trigger.getTriggerId()+"\0"+trigger.getTriggerName());
     }
 
     private ArrayList<DataMap> parseTriggersFromIntent(Intent intent) {
