@@ -46,7 +46,6 @@ public class FlowWearService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         super.onMessageReceived(messageEvent);
-        Log.d(TAG, "onMessageReceived");
         if(messageEvent.getPath().equals("Refresh")){
             startService(new Intent(FlowService.TRIGGERS_REFRESH_REQUEST, null, this, FlowService.class));
         } else if(messageEvent.getPath().equals("Trigger")) {
