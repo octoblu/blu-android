@@ -3,7 +3,6 @@ package com.octoblu.blu;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Parcelable;
-import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -34,16 +33,21 @@ public class FlowWearService extends WearableListenerService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent != null) {
-            Log.d(TAG, "onStartCommand " + intent.getAction());
-            if (intent.getAction().equals(FlowService.TRIGGERS_UPDATE_PKG)) {
-                loadItemsFromIntent(intent);
-            } else
-                return super.onStartCommand(intent, flags, startId);
-        } else {
+        if (intent == null) {
             Log.w(TAG,"onStartCommand got null intent");
+            return Service.START_NOT_STICKY;
         }
+        Log.d(TAG, "onStartCommand " + intent.getAction());
+
+        if (!intent.getAction().equals(FlowService.TRIGGERS_UPDATE_PKG)) {
+            return super.onStartCommand(intent, flags, startId);
+        }
+
+        ArrayList<DataMap> triggers = parseTriggersFromIntent(intent);
+        pushTriggersToWatch(triggers);
+
         return Service.START_NOT_STICKY;
+
     }
 
     @Override
@@ -64,28 +68,26 @@ public class FlowWearService extends WearableListenerService {
         return Asset.createFromRef(trigger.getFlowId()+"\0"+trigger.getFlowName()+"\0"+trigger.getTriggerId()+"\0"+trigger.getTriggerName());
     }
 
-    private void loadItemsFromIntent(Intent intent) {
-        Log.d(TAG, "Sending watch data");
-
-        if ( !intent.hasExtra("triggers")  ) {
-            Log.e(TAG,"Missing required extra on loadItemsFromIntent " +
-                    TextUtils.join(",", intent.getExtras().keySet()));
-            return;
-        }
-
+    private ArrayList<DataMap> parseTriggersFromIntent(Intent intent) {
         ArrayList<Parcelable> parcelables = intent.getParcelableArrayListExtra("triggers");
-        PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/triggers");
-        ArrayList<DataMap> dataMaps = new ArrayList<DataMap>(parcelables.size());
+        ArrayList<DataMap> triggers = new ArrayList<DataMap>(parcelables.size());
 
         for (Parcelable pTrigger : parcelables) {
-            Trigger trigger = (Trigger)pTrigger;
+            Trigger trigger = (Trigger) pTrigger;
             DataMap dataMap = new DataMap();
-            dataMap.putAsset("trigger",createAsset(trigger));
-            dataMap.putLong("time",System.currentTimeMillis());
-            dataMaps.add(dataMap);
+            dataMap.putString("flowId", trigger.getFlowId());
+            dataMap.putString("triggerId", trigger.getTriggerId());
+            dataMap.putString("triggerName", trigger.getTriggerName());
+            triggers.add(dataMap);
         }
 
-        dataMapRequest.getDataMap().putDataMapArrayList("triggers", dataMaps);
+        return triggers;
+    }
+
+    private void pushTriggersToWatch(ArrayList<DataMap> triggers){
+        Log.d(TAG, "pushTriggersToWatch: " + triggers.size());
+        PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/triggers");
+        dataMapRequest.getDataMap().putDataMapArrayList("triggers", triggers);
 
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(googleApiClient, dataMapRequest.asPutDataRequest());
         pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
