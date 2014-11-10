@@ -37,7 +37,6 @@ public class LoginActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                Log.d(TAG, "onPageFinished: " + url);
 
                 Uri uri = Uri.parse(url);
                 Set<String> queryParameters = uri.getQueryParameterNames();

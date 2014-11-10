@@ -58,7 +58,6 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
-                Log.d(TAG,"onLayoutInflated");
                 ListView triggerList = (ListView) stub.findViewById(R.id.triggerList);
                 triggerList.setAdapter(colorListAdapter);
                 triggerList.setOnItemClickListener(self);
@@ -68,19 +67,15 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
                 refreshLayout.setColorSchemeColors(R.color.blue, R.color.purple, R.color.green, R.color.orange);
             }
         });
-
-        Log.d(TAG, "end of onCreate");
     }
 
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
-        Log.d(TAG,"onDataChanged loading data from data api");
         loadItemsFromDataApi();
     }
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.d(TAG,"onConnected loading data from data api");
         Wearable.DataApi.addListener(googleApiClient, this);
 
         loadItemsFromDataApi();
@@ -126,15 +121,12 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         pendingResult.setResultCallback(new ResultCallback<DataItemBuffer>() {
             @Override
             public void onResult(DataItemBuffer dataItems) {
-                Log.d(TAG,"loadingItemsFromDataApi " + dataItems.getCount());
-
                 triggers.clear();
                 colorListAdapter.clear();
+
                 for(DataItem dataItem : dataItems) {
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
-                    Log.d(TAG,"dataMap size " + dataMap.size());
                     ArrayList<DataMap> dataTriggers = dataMap.getDataMapArrayList("triggers");
-                    Log.d(TAG,"triggers size " + dataTriggers.size());
 
                     for(DataMap trigger : dataTriggers) {
                         triggers.add(trigger);
