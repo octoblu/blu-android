@@ -92,6 +92,9 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
                 SharedPreferences.Editor preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0).edit();
                 preferences.clear();
                 preferences.commit();
+                SharedPreferences prefs = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
+                Log.d(TAG, "uuid: " + prefs.getString("uuid", "<not set>"));
+                Log.d(TAG, "token: " + prefs.getString("token", "<not set>"));
                 onStart();
             }
         });

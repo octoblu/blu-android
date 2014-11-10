@@ -32,7 +32,7 @@ import java.util.ArrayList;
 public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
 
     public static final String TAG = "FlowYoWear:FlowYoWear";
-    private ArrayList<Trigger> triggers;
+    private ArrayList<DataMap> triggers;
     private ColorListAdapter colorListAdapter;
     private GoogleApiClient googleApiClient;
     private SwipeRefreshLayout refreshLayout;
@@ -42,7 +42,7 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flow_yo);
 
-        triggers = new ArrayList<Trigger>();
+        triggers = new ArrayList<DataMap>();
         colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, -1);
 
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -69,7 +69,7 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
             }
         });
 
-        Log.d(TAG,"end of onCreate");
+        Log.d(TAG, "end of onCreate");
     }
 
     @Override
@@ -109,23 +109,16 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        final Trigger trigger = this.triggers.get(i);
-        sendMessageToPhone("Trigger", (trigger.getFlowId() + "/" + trigger.getTriggerId()).getBytes());
+        final DataMap trigger = this.triggers.get(i);
+        String flowId = trigger.getString("flowId");
+        String triggerId = trigger.getString("triggerId");
+        sendMessageToPhone("Trigger", (flowId + "/" + triggerId).getBytes());
     }
 
     @Override
     public void onRefresh() {
         refreshLayout.setRefreshing(true);
         sendMessageToPhone("Refresh", null);
-    }
-
-    private static Trigger createTrigger(Asset asset) {
-        String[] parts = asset.getDigest().split("\0");
-        Log.d(TAG, "Have Asset with length " + parts.length);
-        if (parts.length==4) {
-            return new Trigger(parts[0],parts[1],parts[2],parts[3]);
-        } else
-            return new Trigger();
     }
 
     private void loadItemsFromDataApi() {
@@ -138,17 +131,14 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
                 triggers.clear();
                 colorListAdapter.clear();
                 for(DataItem dataItem : dataItems) {
-
-
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
                     Log.d(TAG,"dataMap size " + dataMap.size());
                     ArrayList<DataMap> dataTriggers = dataMap.getDataMapArrayList("triggers");
                     Log.d(TAG,"triggers size " + dataTriggers.size());
 
-                    for(DataMap dataTrigger : dataTriggers) {
-                        Trigger trigger = createTrigger(dataTrigger.getAsset("trigger"));
+                    for(DataMap trigger : dataTriggers) {
                         triggers.add(trigger);
-                        colorListAdapter.add(trigger.getTriggerName());
+                        colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
                 if(refreshLayout != null){
