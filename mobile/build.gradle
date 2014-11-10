@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 20
-    buildToolsVersion "21.1.0"
+    buildToolsVersion '21.1.1'
 
     defaultConfig {
         applicationId "com.octoblu.blu"
@@ -29,4 +29,5 @@ dependencies {
     compile 'com.google.android.gms:play-services:+'
     compile 'com.melnykov:floatingactionbutton:1.0.6'
     compile files('libs/volley.jar')
+    compile project(':sharedLib')
 }

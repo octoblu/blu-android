@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
@@ -24,13 +26,17 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.removeSessionCookie();
         final WebView loginView = (WebView) findViewById(R.id.login_view);
+        loginView.clearCache(true);
+        loginView.clearHistory();
         loginView.getSettings().setJavaScriptEnabled(true);
+
         loginView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                Log.d(TAG, "onPageFinished: " + url);
 
                 Uri uri = Uri.parse(url);
                 Set<String> queryParameters = uri.getQueryParameterNames();

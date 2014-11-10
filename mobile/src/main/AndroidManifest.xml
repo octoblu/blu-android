@@ -27,9 +27,16 @@
             android:label="@string/app_name" >
         </activity>
 
-        <service android:name="com.octoblu.blu.FlowService">
+        <service android:name=".FlowWearService">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+                <action android:name="com.octoblu.blu.TRIGGERS_UPDATE_PKG" />
+            </intent-filter>
+        </service>
+        <service android:name=".FlowService">
+            <intent-filter>
+                <action android:name="com.octoblu.blu.TRIGGERS_REFRESH_REQUEST" />
+                <action android:name="com.octoblu.blu.TRIGGER_PRESSED" />
             </intent-filter>
         </service>
     </application>

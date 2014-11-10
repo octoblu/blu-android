@@ -9,15 +9,5 @@
     <color name="fab_ripple">#FFBB33</color>
 
     <color name="blue">#0099CC</color>
-    <color name="blue_pressed">#33B5E5</color>
-    <color name="purple">#9933CC</color>
-    <color name="purple_pressed">#AA66CC</color>
-    <color name="green">#669900</color>
-    <color name="green_pressed">#99CC00</color>
-    <color name="orange">#FF8800</color>
-    <color name="orange_pressed">#FFBB33</color>
-    <color name="red">#CC0000</color>
-    <color name="red_pressed">#FF4444</color>
-
 
 </resources>

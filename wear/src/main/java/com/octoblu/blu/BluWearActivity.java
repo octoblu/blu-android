@@ -13,6 +13,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
@@ -22,6 +23,9 @@ import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
+
+import com.octoblue.blu.shared.Trigger;
+import com.octoblue.blu.shared.ColorListAdapter;
 
 import java.util.ArrayList;
 
@@ -39,7 +43,7 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         setContentView(R.layout.activity_flow_yo);
 
         triggers = new ArrayList<DataMap>();
-        colorListAdapter = new ColorListAdapter(this, R.layout.color_list_item_row);
+        colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, -1);
 
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -112,21 +116,20 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         sendMessageToPhone("Refresh", null);
     }
 
-    private PendingResult<NodeApi.GetConnectedNodesResult> getNodes() {
-        PendingResult<NodeApi.GetConnectedNodesResult> nodesResult = Wearable.NodeApi.getConnectedNodes(googleApiClient);
-        return nodesResult;
-    }
-
     private void loadItemsFromDataApi() {
         final PendingResult<DataItemBuffer> pendingResult = Wearable.DataApi.getDataItems(googleApiClient);
         pendingResult.setResultCallback(new ResultCallback<DataItemBuffer>() {
             @Override
             public void onResult(DataItemBuffer dataItems) {
+                triggers.clear();
                 colorListAdapter.clear();
+
                 for(DataItem dataItem : dataItems) {
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
-                    triggers = dataMap.getDataMapArrayList("triggers");
-                    for(DataMap trigger : triggers) {
+                    ArrayList<DataMap> dataTriggers = dataMap.getDataMapArrayList("triggers");
+
+                    for(DataMap trigger : dataTriggers) {
+                        triggers.add(trigger);
                         colorListAdapter.add(trigger.getString("triggerName"));
                     }
                 }
@@ -139,7 +142,7 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
     }
 
     public void sendMessageToPhone(final String path, final byte[] message) {
-        getNodes().setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+        Wearable.NodeApi.getConnectedNodes(googleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
             @Override
             public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
                 for(Node node : getConnectedNodesResult.getNodes()) {
