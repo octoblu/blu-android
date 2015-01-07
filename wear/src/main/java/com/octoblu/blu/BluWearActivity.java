@@ -19,6 +19,8 @@ import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataItemBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
@@ -26,7 +28,7 @@ import com.octoblue.blu.shared.ColorListAdapter;
 
 import java.util.ArrayList;
 
-public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener {
+public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener {
 
     public static final String TAG = "FlowYoWear:FlowYoWear";
     private ArrayList<DataMap> triggers;
@@ -37,10 +39,11 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_flow_yo);
 
         triggers = new ArrayList<DataMap>();
-        colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, -1);
+        colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, R.id.triggerLoading);
 
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -72,8 +75,26 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
     }
 
     @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+        Log.d(TAG, "onMessageReceived: " + messageEvent.getPath());
+        String triggerId = new String(messageEvent.getData());
+        for(final DataMap trigger : triggers){
+            if(triggerId.equals(trigger.getString("triggerId"))){
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        colorListAdapter.setLoading(triggers.indexOf(trigger),View.GONE);
+                    }
+                });
+                return;
+            };
+        }
+    }
+
+    @Override
     public void onConnected(Bundle bundle) {
         Wearable.DataApi.addListener(googleApiClient, this);
+        Wearable.MessageApi.addListener(googleApiClient, this);
 
         loadItemsFromDataApi();
         sendMessageToPhone("Refresh", null);
@@ -105,6 +126,7 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         String flowId = trigger.getString("flowId");
         String triggerId = trigger.getString("triggerId");
         String message = (flowId + "/" + triggerId);
+        colorListAdapter.setLoading(i,View.VISIBLE);
         sendMessageToPhone("Trigger", message.getBytes());
     }
 
@@ -149,4 +171,5 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
             }
         });
     }
+
 }

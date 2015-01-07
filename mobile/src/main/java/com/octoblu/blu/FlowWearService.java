@@ -1,7 +1,10 @@
 package com.octoblu.blu;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Parcelable;
 import android.util.Log;
 
@@ -11,6 +14,8 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
@@ -36,11 +41,25 @@ public class FlowWearService extends WearableListenerService {
             return super.onStartCommand(intent, flags, startId);
         }
 
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, final Intent intent) {
+                Wearable.NodeApi.getConnectedNodes(googleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+                    @Override
+                    public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
+                        String message = intent.getStringExtra("triggerId");
+                        for(Node node : getConnectedNodesResult.getNodes()) {
+                            Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), FlowService.TRIGGER_RESULT, message.getBytes());
+                        }
+                    }
+                });
+            }
+        }, new IntentFilter(FlowService.TRIGGER_RESULT));
+
         ArrayList<DataMap> triggers = parseTriggersFromIntent(intent);
         pushTriggersToWatch(triggers);
 
         return Service.START_NOT_STICKY;
-
     }
 
     @Override
