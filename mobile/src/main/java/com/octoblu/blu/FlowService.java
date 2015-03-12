@@ -28,8 +28,7 @@ public class FlowService extends IntentService {
     private static final String TAG = "Flow:Service";
     private static final String UUID_KEY = "uuid";
     private static final String TOKEN_KEY = "token";
-    private static final String MESSAGE_DEVICE_URL = "http://meshblu.octoblu.com/messages";
-    private static final String FLOWS_URL = "http://app.octoblu.com/api/flows";
+
     public static final String TRIGGERS_REFRESH_REQUEST = "com.octoblu.blu.TRIGGERS_REFRESH_REQUEST";
     public static final String TRIGGERS_UPDATE_PKG = "com.octoblu.blu.TRIGGERS_UPDATE_PKG";
     public static final String TRIGGER_PRESSED = "com.octoblu.blu.TRIGGER_PRESSED";
@@ -89,7 +88,7 @@ public class FlowService extends IntentService {
     }
 
     private JsonArrayRequest getFlowsRequest(final String uuid, final String token) {
-        return new JsonArrayRequest(FLOWS_URL, new Response.Listener<JSONArray>(){
+        return new JsonArrayRequest(BluConfig.FLOWS_URL, new Response.Listener<JSONArray>(){
             @Override
             public void onResponse(JSONArray jsonArray) {
                 syncTriggers(parseTriggers(jsonArray));
@@ -118,7 +117,7 @@ public class FlowService extends IntentService {
         intent.putExtra("triggerId",triggerId);
         intent.putExtra("index",i);
 
-        return new StringRequest(Request.Method.POST, MESSAGE_DEVICE_URL, new Response.Listener<String>() {
+        return new StringRequest(Request.Method.POST, BluConfig.MESSAGE_DEVICE_URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String s) {
                 intent.putExtra("result",s);
@@ -203,11 +202,9 @@ public class FlowService extends IntentService {
         Intent intent = new Intent(TRIGGERS_UPDATE_PKG);
         intent.putParcelableArrayListExtra("triggers", triggers);
 
-        if (triggers.size()>0) {
-            sendBroadcast(intent);
-            intent.setClass(this,FlowWearService.class);
-            startService(intent);
-        }
+        sendBroadcast(intent);
+        intent.setClass(this,FlowWearService.class);
+        startService(intent);
     }
 
 }

@@ -24,8 +24,8 @@ public class ColorListAdapter extends ArrayAdapter<String>{
     private static final int red = 0xFFCC0000;
     private static final int red_pressed = 0xFFFF4444;
 
-    private static int[] COLORS = {blue, purple, green, orange, red};
-    private static int[] COLORS_PRESSED = {blue_pressed, purple_pressed, green_pressed, orange_pressed, red_pressed};
+    private static int[] COLORS = {purple, green, orange, red, blue};
+    private static int[] COLORS_PRESSED = {purple_pressed, green_pressed, orange_pressed, red_pressed, blue_pressed};
 
     private Context context;
     private int resource;

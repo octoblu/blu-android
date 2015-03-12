@@ -82,6 +82,7 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
 
         colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, R.id.triggerLoading);
 
+        flowList.setEmptyView(findViewById(R.id.noTriggersText));
         flowList.setAdapter(colorListAdapter);
         flowList.setOnItemClickListener(this);
 

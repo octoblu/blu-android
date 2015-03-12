@@ -16,7 +16,7 @@ import java.util.Set;
 public class LoginActivity extends Activity {
     private final static String TAG = "FlowYo:login";
     final static String PREFERENCES_FILE_NAME = "meshblu_credentials";
-    private final static String LOGIN_URL = "http://app.octoblu.com/static/auth-login.html";
+
     public static final String UUID_KEY = "uuid";
     public static final String TOKEN_KEY = "token";
 
@@ -47,7 +47,7 @@ public class LoginActivity extends Activity {
                 String uuid = uri.getQueryParameter("uuid");
                 String token = uri.getQueryParameter("token");
                 if(uuid.equals("undefined") || token.equals("undefined")){
-                    loginView.loadUrl(LOGIN_URL);
+                    loginView.loadUrl(BluConfig.LOGIN_URL);
                     Toast.makeText(getApplicationContext(), "Invalid username or password", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -60,6 +60,6 @@ public class LoginActivity extends Activity {
                 finish();
             }
         });
-        loginView.loadUrl(LOGIN_URL);
+        loginView.loadUrl(BluConfig.LOGIN_URL);
     }
 }
