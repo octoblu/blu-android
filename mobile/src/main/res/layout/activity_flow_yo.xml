@@ -29,9 +29,7 @@
                 android:gravity="center"
                 android:textSize="48sp" />
          </LinearLayout>
-
     </android.support.v4.widget.SwipeRefreshLayout>
-
 
     <com.melnykov.fab.FloatingActionButton
         android:id="@+id/floatingActionButton"

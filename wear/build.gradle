@@ -9,8 +9,8 @@ android {
         applicationId "com.octoblu.blu"
         minSdkVersion 20
         targetSdkVersion 21
-        versionCode 3
-        versionName "3.0"
+        versionCode 5
+        versionName "5.1"
     }
     buildTypes {
         release {

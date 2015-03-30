@@ -59,6 +59,7 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 ListView triggerList = (ListView) stub.findViewById(R.id.triggerList);
+                triggerList.setEmptyView(findViewById(R.id.noTriggersText));
                 triggerList.setAdapter(colorListAdapter);
                 triggerList.setOnItemClickListener(self);
 
