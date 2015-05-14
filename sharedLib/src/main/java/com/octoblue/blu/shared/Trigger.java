@@ -12,14 +12,14 @@ public class Trigger implements Parcelable {
     private String flowName;
     private String triggerId;
     private String triggerName;
+    private String uri;
 
-    public Trigger() {}
-
-    public Trigger(String flowId, String flowName, String triggerId, String triggerName) {
+    public Trigger(String flowId, String flowName, String triggerId, String triggerName, String uri) {
         this.flowId = flowId;
         this.flowName = flowName;
         this.triggerId = triggerId;
         this.triggerName = triggerName;
+        this.uri = uri;
     }
 
     public Trigger(Parcel in) {
@@ -27,6 +27,7 @@ public class Trigger implements Parcelable {
         flowName = in.readString();
         triggerId = in.readString();
         triggerName = in.readString();
+        uri = in.readString();
     }
 
     public String getFlowId() {
@@ -56,6 +57,7 @@ public class Trigger implements Parcelable {
         dest.writeString(flowName);
         dest.writeString(triggerId);
         dest.writeString(triggerName);
+        dest.writeString(uri);
     }
 
     @SuppressWarnings("unused")
@@ -70,4 +72,8 @@ public class Trigger implements Parcelable {
             return new Trigger[size];
         }
     };
+
+    public String getUri() {
+        return uri;
+    }
 }

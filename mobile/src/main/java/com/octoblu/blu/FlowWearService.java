@@ -47,7 +47,7 @@ public class FlowWearService extends WearableListenerService {
                 Wearable.NodeApi.getConnectedNodes(googleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
                     @Override
                     public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
-                        String message = intent.getStringExtra("triggerId");
+                        String message = intent.getStringExtra("uri");
                         for(Node node : getConnectedNodesResult.getNodes()) {
                             Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), FlowService.TRIGGER_RESULT, message.getBytes());
                         }
@@ -68,11 +68,8 @@ public class FlowWearService extends WearableListenerService {
         if(messageEvent.getPath().equals("Refresh")){
             startService(new Intent(FlowService.TRIGGERS_REFRESH_REQUEST, null, this, FlowService.class));
         } else if(messageEvent.getPath().equals("Trigger")) {
-            String[] strings = new String(messageEvent.getData()).split("/");
-
             Intent intent = new Intent(FlowService.TRIGGER_PRESSED);
-            intent.putExtra("flowId", strings[0]);
-            intent.putExtra("triggerId", strings[1]);
+            intent.putExtra("uri", new String(messageEvent.getData()));
             intent.setClass(this, FlowService.class);
 
             startService(intent);
@@ -89,6 +86,7 @@ public class FlowWearService extends WearableListenerService {
             dataMap.putString("flowId", trigger.getFlowId());
             dataMap.putString("triggerId", trigger.getTriggerId());
             dataMap.putString("triggerName", trigger.getTriggerName());
+            dataMap.putString("uri", trigger.getUri());
             triggers.add(dataMap);
         }
 

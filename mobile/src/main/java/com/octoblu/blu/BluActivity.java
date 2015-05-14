@@ -116,6 +116,7 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
         Intent intent = new Intent(FlowService.TRIGGER_PRESSED);
         intent.putExtra("flowId", trigger.getFlowId());
         intent.putExtra("triggerId", trigger.getTriggerId());
+        intent.putExtra("uri", trigger.getUri());
         intent.putExtra("index",i);
         intent.setClass(this, FlowService.class);
         colorListAdapter.setLoading(i,View.VISIBLE);

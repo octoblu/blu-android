@@ -78,9 +78,9 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, "onMessageReceived: " + messageEvent.getPath());
-        String triggerId = new String(messageEvent.getData());
+        String uri = new String(messageEvent.getData());
         for(final DataMap trigger : triggers){
-            if(triggerId.equals(trigger.getString("triggerId"))){
+            if(uri.equals(trigger.getString("uri"))){
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -124,9 +124,8 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         final DataMap trigger = this.triggers.get(i);
-        String flowId = trigger.getString("flowId");
-        String triggerId = trigger.getString("triggerId");
-        String message = (flowId + "/" + triggerId);
+        String uri = trigger.getString("uri");
+        String message = (uri);
         colorListAdapter.setLoading(i,View.VISIBLE);
         sendMessageToPhone("Trigger", message.getBytes());
     }

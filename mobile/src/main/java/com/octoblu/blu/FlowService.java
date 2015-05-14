@@ -60,14 +60,14 @@ public class FlowService extends IntentService {
                 refresh();
             }
             if (intent.getAction().equals(TRIGGER_PRESSED)) {
-                fireTrigger(intent.getStringExtra("flowId"),
-                        intent.getStringExtra("triggerId"),
+                fireTrigger(intent.getStringExtra("triggerId"),
+                        intent.getStringExtra("uri"),
                         intent.getIntExtra("index", 0));
             }
         }
     }
 
-    private void fireTrigger(final String flowId, final String triggerId, final int i) {
+    private void fireTrigger(final String triggerId, final String uri, final int i) {
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
         if(!preferences.contains(UUID_KEY) || !preferences.contains(TOKEN_KEY)) {
             Log.e(TAG,"Missing uuid or token");
@@ -77,18 +77,18 @@ public class FlowService extends IntentService {
         final String uuid = preferences.getString(UUID_KEY, null);
         final String token = preferences.getString(TOKEN_KEY, null);
 
-        requestQueue.add(getTriggerRequest(flowId, triggerId, uuid, token, i));
+        requestQueue.add(getTriggerRequest(triggerId, uri, uuid, token, i));
     }
 
     private Map<String, String> getAuthHeaders(String uuid, String token) {
         HashMap<String, String> headers = new HashMap<String, String>(2);
-        headers.put("skynet_auth_uuid", uuid);
-        headers.put("skynet_auth_token", token);
+        headers.put("meshblu_auth_uuid", uuid);
+        headers.put("meshblu_auth_token", token);
         return headers;
     }
 
-    private JsonArrayRequest getFlowsRequest(final String uuid, final String token) {
-        return new JsonArrayRequest(BluConfig.FLOWS_URL, new Response.Listener<JSONArray>(){
+    private JsonArrayRequest getTriggersRequest(final String uuid, final String token) {
+        return new JsonArrayRequest(BluConfig.TRIGGERS_URL, new Response.Listener<JSONArray>(){
             @Override
             public void onResponse(JSONArray jsonArray) {
                 syncTriggers(parseTriggers(jsonArray));
@@ -110,14 +110,14 @@ public class FlowService extends IntentService {
         };
     }
 
-    private StringRequest getTriggerRequest(final String flowId, final String triggerId, final String uuid, final String token, int i) {
+    private StringRequest getTriggerRequest(final String triggerId, final String uri, final String uuid, final String token, int i) {
 
         final Intent intent = new Intent(TRIGGER_RESULT);
-        intent.putExtra("flowId",flowId);
         intent.putExtra("triggerId",triggerId);
-        intent.putExtra("index",i);
+        intent.putExtra("uri", uri);
+        intent.putExtra("index", i);
 
-        return new StringRequest(Request.Method.POST, BluConfig.MESSAGE_DEVICE_URL, new Response.Listener<String>() {
+        return new StringRequest(Request.Method.POST, uri, new Response.Listener<String>() {
             @Override
             public void onResponse(String s) {
                 intent.putExtra("result",s);
@@ -132,19 +132,7 @@ public class FlowService extends IntentService {
         }) {
             @Override
             public byte[] getBody() throws AuthFailureError {
-                JSONObject json = new JSONObject();
-                JSONObject payload = new JSONObject();
-
-                try {
-                    json.put("devices", flowId);
-                    json.put("topic", "button");
-                    payload.put("from", triggerId);
-                    json.put("payload", payload);
-                } catch (JSONException e) {
-                    Log.e(TAG, e.getMessage(), e);
-                }
-
-                return json.toString().getBytes();
+                return "".getBytes();
             }
 
             @Override
@@ -156,24 +144,14 @@ public class FlowService extends IntentService {
         };
     }
 
-    private ArrayList<Trigger> parseTriggers(JSONArray flows){
+    private ArrayList<Trigger> parseTriggers(JSONArray triggersJSON){
         ArrayList<Trigger> triggers = new ArrayList<Trigger>();
 
         try {
-            for(int i = 0; i < flows.length(); i++) {
-                JSONObject flow = flows.getJSONObject(i);
-                JSONArray nodes = flow.getJSONArray("nodes");
-
-                for(int j = 0; j < nodes.length(); j++) {
-                    JSONObject node = nodes.getJSONObject(j);
-                    if(!node.getString("type").equals("operation:trigger")) {
-                        continue;
-                    }
-
-                    Trigger trigger = new Trigger(flow.getString("flowId"), flow.getString("name"), node.getString("id"), node.getString("name"));
-                    triggers.add(trigger);
-
-                }
+            for(int i = 0; i < triggersJSON.length(); i++) {
+                JSONObject triggerJSON = triggersJSON.getJSONObject(i);
+                Trigger trigger = new Trigger(triggerJSON.getString("flowId"), triggerJSON.getString("flowName"), triggerJSON.getString("id"), triggerJSON.getString("name"), triggerJSON.getString("uri"));
+                triggers.add(trigger);
             }
         } catch (JSONException jsonException) {
             Log.e(TAG, jsonException.getMessage(), jsonException);
@@ -192,7 +170,7 @@ public class FlowService extends IntentService {
         String uuid = preferences.getString(UUID_KEY, null);
         String token = preferences.getString(TOKEN_KEY, null);
 
-        requestQueue.add(getFlowsRequest(uuid, token));
+        requestQueue.add(getTriggersRequest(uuid, token));
     }
 
     private void syncTriggers(ArrayList<Trigger> triggers) {
