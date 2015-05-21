@@ -28,13 +28,12 @@ import com.octoblue.blu.shared.ColorListAdapter;
 
 import java.util.ArrayList;
 
-public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, SwipeRefreshLayout.OnRefreshListener, MessageApi.MessageListener {
+public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, MessageApi.MessageListener {
 
     public static final String TAG = "FlowYoWear:FlowYoWear";
     private ArrayList<DataMap> triggers;
     private ColorListAdapter colorListAdapter;
     private GoogleApiClient googleApiClient;
-    private SwipeRefreshLayout refreshLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,10 +61,6 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
                 triggerList.setEmptyView(findViewById(R.id.noTriggersText));
                 triggerList.setAdapter(colorListAdapter);
                 triggerList.setOnItemClickListener(self);
-
-                refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshContainer);
-                refreshLayout.setOnRefreshListener(self);
-                refreshLayout.setColorSchemeColors(R.color.blue, R.color.purple, R.color.green, R.color.orange);
             }
         });
     }
@@ -130,12 +125,6 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         sendMessageToPhone("Trigger", message.getBytes());
     }
 
-    @Override
-    public void onRefresh() {
-        refreshLayout.setRefreshing(true);
-        sendMessageToPhone("Refresh", null);
-    }
-
     private void loadItemsFromDataApi() {
         final PendingResult<DataItemBuffer> pendingResult = Wearable.DataApi.getDataItems(googleApiClient);
         pendingResult.setResultCallback(new ResultCallback<DataItemBuffer>() {
@@ -152,9 +141,6 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
                         triggers.add(trigger);
                         colorListAdapter.add(trigger.getString("triggerName"));
                     }
-                }
-                if(refreshLayout != null){
-                    refreshLayout.setRefreshing(false);
                 }
                 dataItems.release();
             }
