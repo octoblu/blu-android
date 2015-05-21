@@ -10,25 +10,26 @@
         android:id="@+id/refreshContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <LinearLayout
+        <ListView
+            android:id="@+id/flowList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
-            <ListView
-                android:id="@+id/flowList"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@color/blue"
-                android:divider="@null" />
-            <TextView
-                android:id="@+id/noTriggersText"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="No Triggers Available"
-                android:background="@color/blue"
-                android:gravity="center"
-                android:textSize="48sp" />
-         </LinearLayout>
+            android:background="@color/blue"
+            android:divider="@null" />
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/refreshContainerEmptyState"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextView
+            android:id="@+id/noTriggersText"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:text="No Triggers Available"
+            android:background="@color/blue"
+            android:gravity="center"
+            android:textSize="48sp" />
     </android.support.v4.widget.SwipeRefreshLayout>
 
     <com.melnykov.fab.FloatingActionButton

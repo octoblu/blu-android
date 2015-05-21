@@ -32,6 +32,7 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
 
     private ColorListAdapter colorListAdapter;
     private SwipeRefreshLayout refreshLayout;
+    private SwipeRefreshLayout refreshLayoutEmptyState;
     private ArrayList<Trigger> triggers;
     private boolean itemsLoaded = false;
 
@@ -44,6 +45,7 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
                 refreshLayout.setRefreshing(true);
         }
     };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,12 +79,14 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
 
         refreshLayout = (SwipeRefreshLayout) findViewById(R.id.refreshContainer);
         refreshLayout.setOnRefreshListener(this);
+        refreshLayoutEmptyState = (SwipeRefreshLayout) findViewById(R.id.refreshContainerEmptyState);
+        refreshLayoutEmptyState.setOnRefreshListener(this);
 
         ListView flowList = (ListView) findViewById(R.id.flowList);
 
         colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, R.id.triggerLoading);
 
-        flowList.setEmptyView(findViewById(R.id.noTriggersText));
+        flowList.setEmptyView(findViewById(R.id.refreshContainerEmptyState));
         flowList.setAdapter(colorListAdapter);
         flowList.setOnItemClickListener(this);
 
@@ -149,6 +153,7 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
 
         itemsLoaded = true;
         refreshLayout.setRefreshing(false);
+        refreshLayoutEmptyState.setRefreshing(false);
 
         if ( !intent.hasExtra("triggers")  ) {
             Log.e(TAG, "Missing required extra on loadItemsFromIntent " +
