@@ -10,22 +10,15 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.octoblue.blu.shared.Trigger;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class TriggerService extends IntentService {
-    private static final String TAG = "Flow:Service";
+    private static final String TAG = "TriggerService";
     private static final String UUID_KEY = "uuid";
     private static final String TOKEN_KEY = "token";
 
@@ -33,6 +26,7 @@ public class TriggerService extends IntentService {
     public static final String TRIGGERS_UPDATE_PKG = "com.octoblu.blu.TRIGGERS_UPDATE_PKG";
     public static final String TRIGGER_PRESSED = "com.octoblu.blu.TRIGGER_PRESSED";
     public static final String TRIGGER_RESULT = "com.octoblu.blu.TRIGGER_RESULT";
+    public static final String TRIGGER_ERROR_MESSAGE = "com.octoblu.blu.TRIGGER_ERROR_MESSAGE";
 
     private RequestQueue requestQueue;
 
@@ -64,7 +58,7 @@ public class TriggerService extends IntentService {
     private void fireTrigger(final Trigger trigger) {
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
         if(!preferences.contains(UUID_KEY) || !preferences.contains(TOKEN_KEY)) {
-            Log.e(TAG,"Missing uuid or token");
+            Log.w(TAG,"Missing uuid or token");
             return;
         }
 
@@ -85,12 +79,13 @@ public class TriggerService extends IntentService {
         return new StringRequest(BluConfig.TRIGGERS_URL, new Response.Listener<String>() {
             @Override
             public void onResponse(String triggersJSONString) {
-                TriggerService.this.syncTriggers(triggersJSONString);
+                syncTriggers(triggersJSONString);
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
                 Log.e(TAG, volleyError.getMessage(), volleyError);
+                emitErrorMessage("Remote server is unreachable.");
             }
         }) {
             @Override
@@ -104,8 +99,8 @@ public class TriggerService extends IntentService {
 
         final Intent intent = new Intent(TRIGGER_RESULT);
         intent.putExtra("trigger", trigger.toJSON());
-        final Intent errorIntent = new Intent(intent);
-        errorIntent.putExtra("error", "Error firing Trigger");
+        final Intent errorIntent = new Intent(TRIGGER_ERROR_MESSAGE);
+        errorIntent.putExtra("message", "Remote server is unreachable");
 
         return new StringRequest(Request.Method.POST, trigger.getUri(), new Response.Listener<String>() {
             @Override
@@ -145,8 +140,16 @@ public class TriggerService extends IntentService {
         intent.putExtra("triggers", triggersJSONString);
 
         sendBroadcast(intent);
-        intent.setClass(this,FlowWearService.class);
+        intent.setClass(this,BluWearService.class);
         startService(intent);
     }
 
+    private void emitErrorMessage(String errorMessage){
+        Intent intent = new Intent(TRIGGER_ERROR_MESSAGE);
+        intent.putExtra("message", errorMessage);
+
+        sendBroadcast(intent);
+        intent.setClass(this, BluWearService.class);
+        startService(intent);
+    }
 }

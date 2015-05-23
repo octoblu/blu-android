@@ -88,8 +88,12 @@ public class ColorListAdapter extends ArrayAdapter<String>{
             return;
         }
         ViewHolder viewHolder = allViews.get(position);
-        if (viewHolder.loading!=null)
+        if (viewHolder == null) {
+            return;
+        }
+        if (viewHolder.loading!=null) {
             viewHolder.loading.setVisibility(visibility);
+        }
         allViews.get(position).loadingVisibility = visibility;
     }
 }

@@ -27,7 +27,7 @@
             android:label="@string/app_name" >
         </activity>
 
-        <service android:name=".FlowWearService">
+        <service android:name=".BluWearService">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
                 <action android:name="com.octoblu.blu.TRIGGERS_UPDATE_PKG" />

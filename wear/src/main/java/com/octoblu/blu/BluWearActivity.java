@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 
 public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, MessageApi.MessageListener {
 
-    public static final String TAG = "FlowYoWear:FlowYoWear";
+    public static final String TAG = "BluWearActivity";
     private ArrayList<Trigger> triggers;
     private ColorListAdapter colorListAdapter;
     private GoogleApiClient googleApiClient;
@@ -72,12 +73,34 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
+        switch (messageEvent.getPath()) {
+            case "com.octoblu.blu.TRIGGER_RESULT":
+                onTriggerResultMessage(messageEvent);
+                break;
+            case "com.octoblu.blu.TRIGGER_ERROR_MESSAGE":
+                onTriggerErrorMessage(messageEvent);
+                break;
+        }
+
+    }
+
+    private void onTriggerErrorMessage(final MessageEvent messageEvent) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String message = new String(messageEvent.getData());
+                Toast.makeText(BluWearActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void onTriggerResultMessage(MessageEvent messageEvent) {
         final Trigger trigger = Trigger.fromJSON(new String(messageEvent.getData()));
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-            colorListAdapter.setLoading(trigger.getIndex(),View.GONE);
+            colorListAdapter.setLoading(trigger.getIndex(), View.GONE);
             }
         });
     }

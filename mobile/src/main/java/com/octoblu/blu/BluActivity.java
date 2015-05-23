@@ -17,6 +17,7 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.melnykov.fab.FloatingActionButton;
 import com.octoblue.blu.shared.ColorListAdapter;
@@ -64,6 +65,9 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
                     case TriggerService.TRIGGER_RESULT:
                         stopItemLoadingFromIntent(intent);
                         break;
+                    case TriggerService.TRIGGER_ERROR_MESSAGE:
+                        showErrorFromIntent(intent);
+                        break;
                 }
             }
         };
@@ -71,7 +75,8 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
         IntentFilter filter = new IntentFilter();
         filter.addAction(TriggerService.TRIGGERS_UPDATE_PKG);
         filter.addAction(TriggerService.TRIGGER_RESULT);
-        registerReceiver(receiver,filter);
+        filter.addAction(TriggerService.TRIGGER_ERROR_MESSAGE);
+        registerReceiver(receiver, filter);
 
         ActionBar actionBar = getActionBar();
         if(actionBar != null) {
@@ -159,6 +164,11 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
             this.triggers.add(trigger);
             colorListAdapter.add(trigger.getTriggerName());
         }
+    }
+
+    private void showErrorFromIntent(Intent intent) {
+        String message = intent.getStringExtra("message");
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     private void stopItemLoadingFromIntent(Intent intent) {
