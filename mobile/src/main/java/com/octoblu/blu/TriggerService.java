@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FlowService extends IntentService {
+public class TriggerService extends IntentService {
     private static final String TAG = "Flow:Service";
     private static final String UUID_KEY = "uuid";
     private static final String TOKEN_KEY = "token";
@@ -37,11 +37,12 @@ public class FlowService extends IntentService {
     private List<Trigger> triggers;
     private RequestQueue requestQueue;
 
-    public FlowService() {
-        super("FlowService");
+    @SuppressWarnings("unused") // Required for Android to call this Service
+    public TriggerService(){
+        super("TriggerService");
     }
 
-    public FlowService(String name) {
+    public TriggerService(String name) {
         super(name);
     }
 
@@ -60,14 +61,14 @@ public class FlowService extends IntentService {
                 refresh();
             }
             if (intent.getAction().equals(TRIGGER_PRESSED)) {
-                fireTrigger(intent.getStringExtra("triggerId"),
-                        intent.getStringExtra("uri"),
-                        intent.getIntExtra("index", 0));
+                String triggerJSON = intent.getStringExtra("trigger");
+                Trigger trigger = Trigger.fromJSON(triggerJSON);
+                fireTrigger(trigger);
             }
         }
     }
 
-    private void fireTrigger(final String triggerId, final String uri, final int i) {
+    private void fireTrigger(final Trigger trigger) {
         SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0);
         if(!preferences.contains(UUID_KEY) || !preferences.contains(TOKEN_KEY)) {
             Log.e(TAG,"Missing uuid or token");
@@ -77,7 +78,7 @@ public class FlowService extends IntentService {
         final String uuid = preferences.getString(UUID_KEY, null);
         final String token = preferences.getString(TOKEN_KEY, null);
 
-        requestQueue.add(getTriggerRequest(triggerId, uri, uuid, token, i));
+        requestQueue.add(getTriggerRequest(trigger, uuid, token));
     }
 
     private Map<String, String> getAuthHeaders(String uuid, String token) {
@@ -88,19 +89,15 @@ public class FlowService extends IntentService {
     }
 
     private JsonArrayRequest getTriggersRequest(final String uuid, final String token) {
-        return new JsonArrayRequest(BluConfig.TRIGGERS_URL, new Response.Listener<JSONArray>(){
+        return new JsonArrayRequest(BluConfig.TRIGGERS_URL, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray jsonArray) {
-                syncTriggers(parseTriggers(jsonArray));
+                TriggerService.this.syncTriggers(Trigger.triggersFromJSON(jsonArray));
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-                if (volleyError!=null) {
-                    if(volleyError.networkResponse!=null && volleyError.networkResponse.statusCode != 200)
-                        Log.e(TAG, volleyError.getMessage(), volleyError);
-                } else
-                    Log.e(TAG,"Unknown volley error");
+                Log.e(TAG, volleyError.getMessage(), volleyError);
             }
         }) {
             @Override
@@ -110,31 +107,24 @@ public class FlowService extends IntentService {
         };
     }
 
-    private StringRequest getTriggerRequest(final String triggerId, final String uri, final String uuid, final String token, int i) {
+    private StringRequest getTriggerRequest(final Trigger trigger, final String uuid, final String token) {
 
         final Intent intent = new Intent(TRIGGER_RESULT);
-        intent.putExtra("triggerId",triggerId);
-        intent.putExtra("uri", uri);
-        intent.putExtra("index", i);
+        intent.putExtra("trigger", trigger.toJSON());
+        final Intent errorIntent = new Intent(intent);
+        errorIntent.putExtra("error", "Error firing Trigger");
 
-        return new StringRequest(Request.Method.POST, uri, new Response.Listener<String>() {
+        return new StringRequest(Request.Method.POST, trigger.getUri(), new Response.Listener<String>() {
             @Override
-            public void onResponse(String s) {
-                intent.putExtra("result",s);
-                sendBroadcast(intent);
+            public void onResponse(String response) {
+                TriggerService.this.sendBroadcast(intent);
             }
         }, new Response.ErrorListener() {
             @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                intent.putExtra("error",(volleyError!=null ? volleyError.getMessage() : null));
-                sendBroadcast(intent);
+            public void onErrorResponse(VolleyError error) {
+                TriggerService.this.sendBroadcast(errorIntent);
             }
         }) {
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                return "".getBytes();
-            }
-
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> headers = getAuthHeaders(uuid, token);
@@ -142,22 +132,6 @@ public class FlowService extends IntentService {
                 return headers;
             }
         };
-    }
-
-    private ArrayList<Trigger> parseTriggers(JSONArray triggersJSON){
-        ArrayList<Trigger> triggers = new ArrayList<Trigger>();
-
-        try {
-            for(int i = 0; i < triggersJSON.length(); i++) {
-                JSONObject triggerJSON = triggersJSON.getJSONObject(i);
-                Trigger trigger = new Trigger(triggerJSON.getString("flowId"), triggerJSON.getString("flowName"), triggerJSON.getString("id"), triggerJSON.getString("name"), triggerJSON.getString("uri"));
-                triggers.add(trigger);
-            }
-        } catch (JSONException jsonException) {
-            Log.e(TAG, jsonException.getMessage(), jsonException);
-        }
-
-        return triggers;
     }
 
     private void refresh() {
@@ -178,7 +152,7 @@ public class FlowService extends IntentService {
         this.triggers.addAll(triggers);
 
         Intent intent = new Intent(TRIGGERS_UPDATE_PKG);
-        intent.putParcelableArrayListExtra("triggers", triggers);
+        intent.putExtra("triggers", Trigger.toJSONArrayString(triggers));
 
         sendBroadcast(intent);
         intent.setClass(this,FlowWearService.class);

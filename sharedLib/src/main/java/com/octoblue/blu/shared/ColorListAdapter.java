@@ -83,7 +83,10 @@ public class ColorListAdapter extends ArrayAdapter<String>{
         return COLORS[position % COLORS.length];
     }
 
-    public void setLoading(int position, int visibility) {
+    public void setLoading(Integer position, int visibility) {
+        if(position == null){
+            return;
+        }
         ViewHolder viewHolder = allViews.get(position);
         if (viewHolder.loading!=null)
             viewHolder.loading.setVisibility(visibility);

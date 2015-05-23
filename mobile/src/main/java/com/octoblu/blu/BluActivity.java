@@ -46,7 +46,6 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
         }
     };
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -58,18 +57,20 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
         receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getAction().equals(FlowService.TRIGGERS_UPDATE_PKG)) {
-                    loadItemsFromIntent(intent);
-                }
-                if (intent.getAction().equals(FlowService.TRIGGER_RESULT)) {
-                    colorListAdapter.setLoading(intent.getIntExtra("index",0),View.GONE);
+                switch (intent.getAction()) {
+                    case TriggerService.TRIGGERS_UPDATE_PKG:
+                        loadItemsFromIntent(intent);
+                        break;
+                    case TriggerService.TRIGGER_RESULT:
+                        stopItemLoadingFromIntent(intent);
+                        break;
                 }
             }
         };
 
         IntentFilter filter = new IntentFilter();
-        filter.addAction(FlowService.TRIGGERS_UPDATE_PKG);
-        filter.addAction(FlowService.TRIGGER_RESULT);
+        filter.addAction(TriggerService.TRIGGERS_UPDATE_PKG);
+        filter.addAction(TriggerService.TRIGGER_RESULT);
         registerReceiver(receiver,filter);
 
         ActionBar actionBar = getActionBar();
@@ -93,11 +94,11 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
         FloatingActionButton floatingActionButton = (FloatingActionButton) findViewById(R.id.floatingActionButton);
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                SharedPreferences.Editor preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0).edit();
+            public void onClick(View view) {
+                SharedPreferences.Editor preferences = BluActivity.this.getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0).edit();
                 preferences.clear();
                 preferences.commit();
-                onStart();
+                BluActivity.this.onStart();
             }
         });
     }
@@ -117,12 +118,10 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
         final Trigger trigger = this.triggers.get(i);
-        Intent intent = new Intent(FlowService.TRIGGER_PRESSED);
-        intent.putExtra("flowId", trigger.getFlowId());
-        intent.putExtra("triggerId", trigger.getTriggerId());
-        intent.putExtra("uri", trigger.getUri());
-        intent.putExtra("index",i);
-        intent.setClass(this, FlowService.class);
+        trigger.setIndex(i);
+        Intent intent = new Intent(TriggerService.TRIGGER_PRESSED);
+        intent.putExtra("trigger", trigger.toJSON());
+        intent.setClass(this, TriggerService.class);
         colorListAdapter.setLoading(i,View.VISIBLE);
         startService(intent);
     }
@@ -148,32 +147,29 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
     }
 
     private void loadItemsFromIntent(Intent intent) {
-        if (intent == null)
-            return;
-
         itemsLoaded = true;
         refreshLayout.setRefreshing(false);
         refreshLayoutEmptyState.setRefreshing(false);
 
-        if ( !intent.hasExtra("triggers")  ) {
-            Log.e(TAG, "Missing required extra on loadItemsFromIntent " +
-                    (intent.getExtras() != null ? TextUtils.join(", ", intent.getExtras().keySet()) : "null extras"));
-            return;
-        }
-
         colorListAdapter.clear();
-        triggers.clear();
+        this.triggers.clear();
 
-        for (Parcelable pTrigger : intent.getParcelableArrayListExtra("triggers")) {
-            Trigger trigger = (Trigger)pTrigger;
-            triggers.add(trigger);
+        String triggersJSONString = intent.getStringExtra("triggers");
+        for(Trigger trigger : Trigger.triggersFromJSON(triggersJSONString)) {
+            this.triggers.add(trigger);
             colorListAdapter.add(trigger.getTriggerName());
         }
+    }
+
+    private void stopItemLoadingFromIntent(Intent intent) {
+        Trigger trigger = Trigger.fromJSON(intent.getStringExtra("trigger"));
+        Integer index = trigger.getIndex();
+        colorListAdapter.setLoading(index, View.GONE);
     }
 
     public void refreshTriggers() {
         itemsLoaded = false;
         handler.postDelayed(refreshRunnable, 50);
-        startService(new Intent(FlowService.TRIGGERS_REFRESH_REQUEST, null, this, FlowService.class));
+        startService(new Intent(TriggerService.TRIGGERS_REFRESH_REQUEST, null, this, TriggerService.class));
     }
 }

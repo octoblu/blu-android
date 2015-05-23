@@ -25,7 +25,7 @@ import java.util.ArrayList;
 
 public class FlowWearService extends WearableListenerService {
 
-    private static final String TAG = "FlowWear:WearableService";
+    private static final String TAG = "FlowWearService";
     private GoogleApiClient googleApiClient;
 
     @Override
@@ -37,7 +37,7 @@ public class FlowWearService extends WearableListenerService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null || !intent.getAction().equals(FlowService.TRIGGERS_UPDATE_PKG)) {
+        if (intent == null || !intent.getAction().equals(TriggerService.TRIGGERS_UPDATE_PKG)) {
             return super.onStartCommand(intent, flags, startId);
         }
 
@@ -47,17 +47,16 @@ public class FlowWearService extends WearableListenerService {
                 Wearable.NodeApi.getConnectedNodes(googleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
                     @Override
                     public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
-                        String message = intent.getStringExtra("uri");
+                        String message = intent.getStringExtra("trigger");
                         for(Node node : getConnectedNodesResult.getNodes()) {
-                            Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), FlowService.TRIGGER_RESULT, message.getBytes());
+                            Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), TriggerService.TRIGGER_RESULT, message.getBytes());
                         }
                     }
                 });
             }
-        }, new IntentFilter(FlowService.TRIGGER_RESULT));
+        }, new IntentFilter(TriggerService.TRIGGER_RESULT));
 
-        ArrayList<DataMap> triggers = parseTriggersFromIntent(intent);
-        pushTriggersToWatch(triggers);
+        pushTriggersToWatch(intent.getStringExtra("triggers"));
 
         return Service.START_NOT_STICKY;
     }
@@ -65,38 +64,16 @@ public class FlowWearService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         super.onMessageReceived(messageEvent);
-        if(messageEvent.getPath().equals("Refresh")){
-            startService(new Intent(FlowService.TRIGGERS_REFRESH_REQUEST, null, this, FlowService.class));
-        } else if(messageEvent.getPath().equals("Trigger")) {
-            Intent intent = new Intent(FlowService.TRIGGER_PRESSED);
-            intent.putExtra("uri", new String(messageEvent.getData()));
-            intent.setClass(this, FlowService.class);
+        Intent intent = new Intent(TriggerService.TRIGGER_PRESSED);
+        intent.putExtra("trigger", new String(messageEvent.getData()));
+        intent.setClass(this, TriggerService.class);
 
-            startService(intent);
-        }
+        startService(intent);
     }
 
-    private ArrayList<DataMap> parseTriggersFromIntent(Intent intent) {
-        ArrayList<Parcelable> parcelables = intent.getParcelableArrayListExtra("triggers");
-        ArrayList<DataMap> triggers = new ArrayList<DataMap>(parcelables.size());
-
-        for (Parcelable pTrigger : parcelables) {
-            Trigger trigger = (Trigger) pTrigger;
-            DataMap dataMap = new DataMap();
-            dataMap.putString("flowId", trigger.getFlowId());
-            dataMap.putString("triggerId", trigger.getTriggerId());
-            dataMap.putString("triggerName", trigger.getTriggerName());
-            dataMap.putString("uri", trigger.getUri());
-            triggers.add(dataMap);
-        }
-
-        return triggers;
-    }
-
-    private void pushTriggersToWatch(ArrayList<DataMap> triggers){
-        Log.d(TAG, "pushTriggersToWatch: " + triggers.size());
+    private void pushTriggersToWatch(String triggersJSONString){
         PutDataMapRequest dataMapRequest = PutDataMapRequest.create("/triggers");
-        dataMapRequest.getDataMap().putDataMapArrayList("triggers", triggers);
+        dataMapRequest.getDataMap().putString("triggers", triggersJSONString);
 
         PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi.putDataItem(googleApiClient, dataMapRequest.asPutDataRequest());
         pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {

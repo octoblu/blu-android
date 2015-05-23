@@ -1,20 +1,26 @@
 package com.octoblue.blu.shared;
 
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 
-public class Trigger implements Parcelable {
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
+public class Trigger {
 
     private static final String TAG = "Trigger";
 
+    private Integer index;
     private String flowId;
     private String flowName;
     private String triggerId;
     private String triggerName;
     private String uri;
 
-    public Trigger(String flowId, String flowName, String triggerId, String triggerName, String uri) {
+    public Trigger(String flowId, String flowName, String triggerId, String triggerName, String uri, Integer index) {
+        this.index = index;
         this.flowId = flowId;
         this.flowName = flowName;
         this.triggerId = triggerId;
@@ -22,12 +28,12 @@ public class Trigger implements Parcelable {
         this.uri = uri;
     }
 
-    public Trigger(Parcel in) {
-        flowId = in.readString();
-        flowName = in.readString();
-        triggerId = in.readString();
-        triggerName = in.readString();
-        uri = in.readString();
+    public Integer getIndex() {
+        return index;
+    }
+
+    public void setIndex(Integer index){
+        this.index = index;
     }
 
     public String getFlowId() {
@@ -46,34 +52,102 @@ public class Trigger implements Parcelable {
         return triggerName;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(flowId);
-        dest.writeString(flowName);
-        dest.writeString(triggerId);
-        dest.writeString(triggerName);
-        dest.writeString(uri);
-    }
-
-    @SuppressWarnings("unused")
-    public static final Parcelable.Creator<Trigger> CREATOR = new Parcelable.Creator<Trigger>() {
-        @Override
-        public Trigger createFromParcel(Parcel in) {
-            return new Trigger(in);
-        }
-
-        @Override
-        public Trigger[] newArray(int size) {
-            return new Trigger[size];
-        }
-    };
-
     public String getUri() {
         return uri;
+    }
+
+    public String toJSON() {
+        return toJSONObject().toString();
+    }
+
+    private JSONObject toJSONObject() {
+        JSONObject triggerJSON = new JSONObject();
+
+        try {
+            triggerJSON.put("index", index);
+            triggerJSON.put("flowId", flowId);
+            triggerJSON.put("flowName", flowName);
+            triggerJSON.put("id", triggerId);
+            triggerJSON.put("name", triggerName);
+            triggerJSON.put("uri", uri);
+        } catch (JSONException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
+        return triggerJSON;
+    }
+
+
+    public static Trigger fromJSON(String triggerJSONString) {
+        JSONObject triggerJSON = new JSONObject();
+        try {
+            triggerJSON = new JSONObject(triggerJSONString);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return fromJSON(triggerJSON);
+    }
+
+
+    public static Trigger fromJSON(JSONObject triggerJSON) {
+        Integer index = getIntegerForKeyOrNull(triggerJSON, "index");
+        String flowId = getStringForKeyOrNull(triggerJSON, "flowId");
+        String flowName = getStringForKeyOrNull(triggerJSON, "flowName");
+        String triggerId = getStringForKeyOrNull(triggerJSON, "id");
+        String triggerName = getStringForKeyOrNull(triggerJSON, "name");
+        String uri = getStringForKeyOrNull(triggerJSON, "uri");
+
+        return new Trigger(flowId, flowName, triggerId, triggerName, uri, index);
+    }
+
+    public static String toJSONArrayString(ArrayList<Trigger> triggers) {
+        JSONArray triggersJSON = new JSONArray();
+
+        for(Trigger trigger : triggers) {
+            triggersJSON.put(trigger.toJSONObject());
+        }
+
+        return triggersJSON.toString();
+    }
+
+    public static ArrayList<Trigger> triggersFromJSON(JSONArray triggersJSON) {
+        ArrayList<Trigger> triggers = new ArrayList<Trigger>();
+
+        for(int i = 0; i < triggersJSON.length(); i++) {
+            try {
+                JSONObject triggerJSON = triggersJSON.getJSONObject(i);
+                triggers.add(fromJSON(triggerJSON));
+            } catch (JSONException jsonException) {
+                Log.e(TAG, jsonException.getMessage(), jsonException);
+            }
+        }
+
+        return triggers;
+    }
+
+    public static ArrayList<Trigger> triggersFromJSON(String triggersJSONString) {
+        JSONArray triggersJSON = new JSONArray();
+        try {
+            triggersJSON = new JSONArray(triggersJSONString);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return triggersFromJSON(triggersJSON);
+    }
+
+    private static Integer getIntegerForKeyOrNull(JSONObject json, String key) {
+        try {
+            return json.getInt(key);
+        } catch (JSONException e) {
+            return null;
+        }
+    }
+
+    public static String getStringForKeyOrNull(JSONObject json, String key) {
+        try {
+            return json.getString(key);
+        } catch (JSONException e) {
+            return null;
+        }
     }
 }

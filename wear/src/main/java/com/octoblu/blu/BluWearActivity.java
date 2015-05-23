@@ -25,23 +25,23 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 import com.octoblue.blu.shared.ColorListAdapter;
+import com.octoblue.blu.shared.Trigger;
 
 import java.util.ArrayList;
 
 public class BluWearActivity extends Activity implements DataApi.DataListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, AdapterView.OnItemClickListener, MessageApi.MessageListener {
 
     public static final String TAG = "FlowYoWear:FlowYoWear";
-    private ArrayList<DataMap> triggers;
+    private ArrayList<Trigger> triggers;
     private ColorListAdapter colorListAdapter;
     private GoogleApiClient googleApiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_flow_yo);
 
-        triggers = new ArrayList<DataMap>();
+        triggers = new ArrayList<Trigger>();
         colorListAdapter = new ColorListAdapter(this, R.layout.trigger_list_item, R.id.triggerName, R.id.triggerLoading);
 
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -72,19 +72,14 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        Log.d(TAG, "onMessageReceived: " + messageEvent.getPath());
-        String uri = new String(messageEvent.getData());
-        for(final DataMap trigger : triggers){
-            if(uri.equals(trigger.getString("uri"))){
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        colorListAdapter.setLoading(triggers.indexOf(trigger),View.GONE);
-                    }
-                });
-                return;
-            };
-        }
+        final Trigger trigger = Trigger.fromJSON(new String(messageEvent.getData()));
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+            colorListAdapter.setLoading(trigger.getIndex(),View.GONE);
+            }
+        });
     }
 
     @Override
@@ -93,7 +88,6 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
         Wearable.MessageApi.addListener(googleApiClient, this);
 
         loadItemsFromDataApi();
-        sendMessageToPhone("Refresh", null);
     }
 
 
@@ -118,11 +112,10 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-        final DataMap trigger = this.triggers.get(i);
-        String uri = trigger.getString("uri");
-        String message = (uri);
+        final Trigger trigger = this.triggers.get(i);
+        trigger.setIndex(i);
         colorListAdapter.setLoading(i,View.VISIBLE);
-        sendMessageToPhone("Trigger", message.getBytes());
+        sendMessageToPhone("TRIGGER", trigger.toJSON().getBytes());
     }
 
     private void loadItemsFromDataApi() {
@@ -135,11 +128,11 @@ public class BluWearActivity extends Activity implements DataApi.DataListener, G
 
                 for(DataItem dataItem : dataItems) {
                     DataMap dataMap = DataMapItem.fromDataItem(dataItem).getDataMap();
-                    ArrayList<DataMap> dataTriggers = dataMap.getDataMapArrayList("triggers");
+                    String triggersJSONString = dataMap.getString("triggers");
 
-                    for(DataMap trigger : dataTriggers) {
+                    for(Trigger trigger : Trigger.triggersFromJSON(triggersJSONString)) {
                         triggers.add(trigger);
-                        colorListAdapter.add(trigger.getString("triggerName"));
+                        colorListAdapter.add(trigger.getTriggerName());
                     }
                 }
                 dataItems.release();
