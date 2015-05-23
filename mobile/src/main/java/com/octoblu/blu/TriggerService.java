@@ -34,7 +34,6 @@ public class TriggerService extends IntentService {
     public static final String TRIGGER_PRESSED = "com.octoblu.blu.TRIGGER_PRESSED";
     public static final String TRIGGER_RESULT = "com.octoblu.blu.TRIGGER_RESULT";
 
-    private List<Trigger> triggers;
     private RequestQueue requestQueue;
 
     @SuppressWarnings("unused") // Required for Android to call this Service
@@ -42,16 +41,11 @@ public class TriggerService extends IntentService {
         super("TriggerService");
     }
 
-    public TriggerService(String name) {
-        super(name);
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
 
         requestQueue = Volley.newRequestQueue(this);
-        triggers = new ArrayList<Trigger>();
     }
 
     @Override
@@ -88,11 +82,11 @@ public class TriggerService extends IntentService {
         return headers;
     }
 
-    private JsonArrayRequest getTriggersRequest(final String uuid, final String token) {
-        return new JsonArrayRequest(BluConfig.TRIGGERS_URL, new Response.Listener<JSONArray>() {
+    private StringRequest getTriggersRequest(final String uuid, final String token) {
+        return new StringRequest(BluConfig.TRIGGERS_URL, new Response.Listener<String>() {
             @Override
-            public void onResponse(JSONArray jsonArray) {
-                TriggerService.this.syncTriggers(Trigger.triggersFromJSON(jsonArray));
+            public void onResponse(String triggersJSONString) {
+                TriggerService.this.syncTriggers(triggersJSONString);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -147,12 +141,9 @@ public class TriggerService extends IntentService {
         requestQueue.add(getTriggersRequest(uuid, token));
     }
 
-    private void syncTriggers(ArrayList<Trigger> triggers) {
-        this.triggers.clear();
-        this.triggers.addAll(triggers);
-
+    private void syncTriggers(String triggersJSONString) {
         Intent intent = new Intent(TRIGGERS_UPDATE_PKG);
-        intent.putExtra("triggers", Trigger.toJSONArrayString(triggers));
+        intent.putExtra("triggers", triggersJSONString);
 
         sendBroadcast(intent);
         intent.setClass(this,FlowWearService.class);
