@@ -44,7 +44,6 @@ public class TriggerService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-
         requestQueue = Volley.newRequestQueue(this);
     }
 

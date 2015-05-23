@@ -44,15 +44,7 @@ public class FlowWearService extends WearableListenerService {
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, final Intent intent) {
-                Wearable.NodeApi.getConnectedNodes(googleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-                    @Override
-                    public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
-                        String message = intent.getStringExtra("trigger");
-                        for(Node node : getConnectedNodesResult.getNodes()) {
-                            Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), TriggerService.TRIGGER_RESULT, message.getBytes());
-                        }
-                    }
-                });
+                onTriggerResultIntent(intent);
             }
         }, new IntentFilter(TriggerService.TRIGGER_RESULT));
 
@@ -64,11 +56,33 @@ public class FlowWearService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         super.onMessageReceived(messageEvent);
+
+        switch (messageEvent.getPath()){
+            case "TRIGGER":
+                onFireTriggerMessage(messageEvent);
+                break;
+        }
+
+    }
+
+    private void onFireTriggerMessage(MessageEvent messageEvent) {
         Intent intent = new Intent(TriggerService.TRIGGER_PRESSED);
         intent.putExtra("trigger", new String(messageEvent.getData()));
         intent.setClass(this, TriggerService.class);
 
         startService(intent);
+    }
+
+    private void onTriggerResultIntent(final Intent intent) {
+        Wearable.NodeApi.getConnectedNodes(googleApiClient).setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+            @Override
+            public void onResult(NodeApi.GetConnectedNodesResult getConnectedNodesResult) {
+                String message = intent.getStringExtra("trigger");
+                for(Node node : getConnectedNodesResult.getNodes()) {
+                    Wearable.MessageApi.sendMessage(googleApiClient, node.getId(), TriggerService.TRIGGER_RESULT, message.getBytes());
+                }
+            }
+        });
     }
 
     private void pushTriggersToWatch(String triggersJSONString){
