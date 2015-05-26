@@ -12,20 +12,15 @@ import android.widget.TextView;
 
 public class ColorListAdapter extends ArrayAdapter<String>{
 
-    private static final String TAG = "ColorListAdapter";
-    private static final int blue = 0xFF0099CC;
-    private static final int blue_pressed = 0xFF33B5E5;
-    private static final int purple = 0xFF9933CC;
-    private static final int purple_pressed = 0xFFAA66CC;
-    private static final int green = 0xFF669900;
-    private static final int green_pressed = 0xFF99CC00;
-    private static final int orange = 0xFFFF8800;
-    private static final int orange_pressed = 0xFFFFBB33;
-    private static final int red = 0xFFCC0000;
-    private static final int red_pressed = 0xFFFF4444;
-
-    private static int[] COLORS = {purple, green, orange, red, blue};
-    private static int[] COLORS_PRESSED = {purple_pressed, green_pressed, orange_pressed, red_pressed, blue_pressed};
+    private static int[] COLORS = {
+            0xff9c27b0,
+            0xff3f51b5,
+            0xff03a9f4,
+            0xff009688,
+            0xff8bc34a,
+            0xffffc107,
+            0xfff44336,
+    };
 
     private Context context;
     private int resource;

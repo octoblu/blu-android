@@ -2,8 +2,10 @@ package com.octoblu.blu;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -100,10 +102,7 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SharedPreferences.Editor preferences = BluActivity.this.getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0).edit();
-                preferences.clear();
-                preferences.commit();
-                BluActivity.this.onStart();
+                onClickLogout();
             }
         });
     }
@@ -112,6 +111,30 @@ public class BluActivity extends Activity implements AdapterView.OnItemClickList
     public void onDestroy() {
         unregisterReceiver(receiver);
         super.onDestroy();
+    }
+
+    private void onClickLogout() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Are you sure?");
+        builder.setMessage("This will log you out of your account.");
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.setPositiveButton("Logout", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                SharedPreferences.Editor preferences = getSharedPreferences(LoginActivity.PREFERENCES_FILE_NAME, 0).edit();
+                preferences.clear();
+                preferences.commit();
+                onStart();
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     @Override

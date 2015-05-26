@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
         android:layout_margin="16dp"
-        android:src="@drawable/ic_exit_to_app"
+        android:src="@drawable/ic_exit_to_app_white"
         app:fab_colorNormal="@color/fab_primary"
         app:fab_colorPressed="@color/fab_primary_pressed"
         app:fab_colorRipple="@color/fab_ripple" />

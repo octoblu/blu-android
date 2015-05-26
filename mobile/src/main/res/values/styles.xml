@@ -4,10 +4,9 @@
     <style name="AppTheme" parent="android:Theme.Holo.Light.DarkActionBar">
         <!-- Customize your theme here. -->
     </style>
-    <color name="fab_primary">#AA99CC</color>
-    <color name="fab_primary_pressed">#9933CC</color>
-    <color name="fab_ripple">#FFBB33</color>
+    <color name="fab_primary">#545454</color>
+    <color name="fab_primary_pressed">#A8A8A8</color>
+    <color name="fab_ripple">#545454</color>
 
-    <color name="blue">#0099CC</color>
-
+    <color name="blue">#03a9f4</color>
 </resources>
