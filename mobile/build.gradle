@@ -8,13 +8,13 @@ android {
         applicationId "com.octoblu.blu"
         minSdkVersion 16
         targetSdkVersion 21
-        versionCode 7
-        versionName "7.0"
+        versionCode 8
+        versionName "8.0"
     }
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguaruild-android.txt'), 'proguard-rules.pro'
         }
     }
 }
